@@ -16,6 +16,12 @@ type UserInput = {
   role: UserDocument['role'];
 };
 
+type NewPasswordInput = {
+  newPassword: string;
+  oldPassword: string;
+  userId: string;
+};
+
 const usersSchema = new Schema(
   {
     fullName: {
@@ -50,4 +56,4 @@ const usersSchema = new Schema(
 
 const User: Model<UserDocument> = mongoose.model<UserDocument>('User', usersSchema);
 
-export { User, UserInput, UserDocument };
+export { User, UserInput, UserDocument, NewPasswordInput };

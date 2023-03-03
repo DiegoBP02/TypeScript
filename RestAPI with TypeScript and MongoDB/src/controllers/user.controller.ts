@@ -1,11 +1,16 @@
 import { Request, Response } from 'express';
-import crypto from 'crypto';
-import { User, UserInput } from '../models/user.model';
+import { User, UserInput, NewPasswordInput } from '../models/user.model';
+import bcrypt from 'bcrypt';
 
 const hashPassword = (password: string) => {
-  const salt = crypto.randomBytes(16).toString('hex');
+  const salt = bcrypt.genSaltSync(10);
 
-  return crypto.pbkdf2Sync(password, salt, 100, 64, 'sha512').toString('hex');
+  return bcrypt.hashSync(password, salt);
+};
+
+const comparePassword = (newPassword: string, oldPassword: string) => {
+  const isMatch = bcrypt.compareSync(newPassword, oldPassword);
+  return isMatch;
 };
 
 const createUser = async (req: Request, res: Response) => {
@@ -64,6 +69,37 @@ const updateUser = async (req: Request, res: Response) => {
 
   return res.status(200).json({ data: userUpdated });
 };
+
+const updateUserPassword = async (req: Request, res: Response) => {
+  const { userId, oldPassword, newPassword } = req.body;
+  if (!userId || !oldPassword || !newPassword) {
+    res.status(422).json({ message: 'The fields userId, oldPassword and newPassword are required!' });
+  }
+
+  const newPasswordInput: NewPasswordInput = {
+    newPassword,
+    oldPassword,
+    userId,
+  };
+
+  const user = await User.findById(newPasswordInput.userId);
+  if (!user) {
+    return res.status(404).json({ message: `User with id '${newPasswordInput.userId}' not found!` });
+  }
+
+  const isPasswordValid = comparePassword(newPasswordInput.newPassword, user.password);
+  if (isPasswordValid) {
+    return res.status(401).json({ message: 'Invalid credentials!' });
+  }
+  const newPasswordHashed = hashPassword(newPasswordInput.newPassword);
+  const updatedUser = await User.findByIdAndUpdate(
+    { _id: newPasswordInput.userId },
+    { password: newPasswordHashed },
+    { new: true, runValidators: true },
+  );
+
+  return res.status(200).json({ data: updatedUser });
+};
 const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -72,4 +108,4 @@ const deleteUser = async (req: Request, res: Response) => {
   return res.status(200).json({ message: 'User deleted successfully!' });
 };
 
-export { createUser, deleteUser, getAllUsers, getUser, updateUser };
+export { createUser, deleteUser, getAllUsers, getUser, updateUser, updateUserPassword };
