@@ -1,3 +1,5 @@
+Learning TypeScript with MongoDB, done by reading the article: https://blog.tericcabrel.com/use-mongodb-with-node-js/
+
 # Node Typescript Starter
 
 This project contains a minimal starter for Node.js project with Typescript, ESLint and Prettier
