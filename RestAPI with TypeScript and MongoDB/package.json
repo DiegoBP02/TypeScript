@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "start": "nodemon --watch \"*.ts\" --exec \"ts-node\" ./src/index.ts",
-    "eslint:fix": "eslint --fix"
+    "eslint:fix": "eslint --fix",
+    "test": "jest --watchAll"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
@@ -28,6 +29,7 @@
     "bcrypt": "^5.1.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "mongodb-memory-server": "^8.11.5",
     "mongoose": "^5.12.1"
   }
 }
