@@ -8,8 +8,8 @@ const hashPassword = (password: string) => {
   return bcrypt.hashSync(password, salt);
 };
 
-const comparePassword = (newPassword: string, oldPassword: string) => {
-  const isMatch = bcrypt.compareSync(newPassword, oldPassword);
+export const comparePassword = (oldPassword: string, userPassword: string) => {
+  const isMatch = bcrypt.compareSync(oldPassword, userPassword);
   return isMatch;
 };
 
@@ -71,26 +71,27 @@ const updateUser = async (req: Request, res: Response) => {
 };
 
 const updateUserPassword = async (req: Request, res: Response) => {
-  const { userId, oldPassword, newPassword } = req.body;
-  if (!userId || !oldPassword || !newPassword) {
-    res.status(422).json({ message: 'The fields userId, oldPassword and newPassword are required!' });
-  }
+  const { oldPassword, newPassword } = req.body;
 
   const newPasswordInput: NewPasswordInput = {
     newPassword,
     oldPassword,
-    userId,
+    userId: req.params.id,
   };
-
   const user = await User.findById(newPasswordInput.userId);
   if (!user) {
     return res.status(404).json({ message: `User with id '${newPasswordInput.userId}' not found!` });
   }
 
-  const isPasswordValid = comparePassword(newPasswordInput.newPassword, user.password);
-  if (isPasswordValid) {
+  if (!oldPassword || !newPassword) {
+    return res.status(422).json({ message: 'The fields oldPassword and newPassword are required!' });
+  }
+
+  const isPasswordValid = comparePassword(newPasswordInput.oldPassword, user.password);
+  if (!isPasswordValid) {
     return res.status(401).json({ message: 'Invalid credentials!' });
   }
+
   const newPasswordHashed = hashPassword(newPasswordInput.newPassword);
   const updatedUser = await User.findByIdAndUpdate(
     { _id: newPasswordInput.userId },
@@ -103,7 +104,10 @@ const updateUserPassword = async (req: Request, res: Response) => {
 const deleteUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  await User.findByIdAndDelete(id);
+  const user = await User.findByIdAndDelete(id);
+  if (!user) {
+    return res.status(404).json({ message: `User with id '${id}' not found!` });
+  }
 
   return res.status(200).json({ message: 'User deleted successfully!' });
 };
